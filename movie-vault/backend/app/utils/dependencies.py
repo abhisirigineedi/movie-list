@@ -21,13 +21,14 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
         if token.startswith("Bearer "):
             token = token[7:]
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        user_id: str = payload.get("sub")
-        if user_id is None:
+        unparsed_user_id = payload.get("sub")
+        if unparsed_user_id is None:
             raise credentials_exception
-    except jwt.PyJWTError:
+        user_id = int(unparsed_user_id)
+    except (jwt.PyJWTError, ValueError, TypeError):
         raise credentials_exception
         
-    user = db.query(User).filter(User.id == int(user_id)).first()
+    user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise credentials_exception
     return user

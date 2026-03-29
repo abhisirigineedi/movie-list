@@ -7,7 +7,8 @@ from app.routes import auth as auth_router, movies as movies_router, profile as 
 # Creates the database tables
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Movie Vault API")
+# Disable docs to meet production requirements
+app = FastAPI(title="Movie Vault API", docs_url=None, redoc_url=None, openapi_url=None)
 
 # Configure CORS
 origins = [
@@ -31,4 +32,15 @@ app.include_router(profile_router.router, prefix="/api/profile", tags=["profile"
 
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to Movie Vault API"}
+    return {"message": "API is running successfully"}
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
+
+# Entrypoint for running via Python or Render
+if __name__ == "__main__":
+    import uvicorn
+    import os
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port)
