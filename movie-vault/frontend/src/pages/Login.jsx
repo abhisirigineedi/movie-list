@@ -19,7 +19,11 @@ export default function Login() {
       await login(username, password);
       navigate("/dashboard");
     } catch (err) {
-      setError(err.response?.data?.detail || "Failed to login. Please try again.");
+      let msg = err.message;
+      if (err.code === "auth/invalid-credential") {
+          msg = "Invalid username or password. Please check your spelling or register first.";
+      }
+      setError(msg || "Failed to login. Please try again.");
     } finally {
       setLoading(false);
     }

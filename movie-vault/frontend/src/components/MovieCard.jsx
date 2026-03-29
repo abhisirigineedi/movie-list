@@ -1,23 +1,21 @@
-import { Star, StarHalf, Edit2, Trash2 } from "lucide-react";
+import { Star, Edit2, Trash2 } from "lucide-react";
 
 export default function MovieCard({ movie, onEdit, onDelete }) {
-  // Component to render stars based on rating
   const renderStars = (rating) => {
-    const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
-
-    for (let i = 0; i < fullStars; i++) {
-        stars.push(<Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />);
-    }
-    if (hasHalfStar) {
-        stars.push(<StarHalf key="half" className="w-5 h-5 fill-yellow-400 text-yellow-400" />);
-    }
-    const emptyStars = 5 - stars.length;
-    for (let i = 0; i < emptyStars; i++) {
-        stars.push(<Star key={`empty-${i}`} className="w-5 h-5 text-slate-600" />);
-    }
-    return stars;
+    return Array.from({ length: 5 }).map((_, i) => {
+      const fillPercent = Math.min(Math.max(rating - i, 0), 1) * 100;
+      return (
+        <div key={i} className="relative w-5 h-5 text-slate-400">
+          <Star className="w-5 h-5" />
+          <div 
+            className="absolute top-0 left-0 h-full overflow-hidden text-yellow-500"
+            style={{ width: `${fillPercent}%` }}
+          >
+            <Star className="w-5 h-5 fill-current" />
+          </div>
+        </div>
+      );
+    });
   };
 
   return (

@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
-import api from "../api/axios";
 import { PlusCircle, Search } from "lucide-react";
 import MovieCard from "../components/MovieCard";
 import MovieForm from "../components/MovieForm";
+import { db } from "../firebase";
+import { useAuth } from "../context/AuthContext";
+import { collection, query, where, getDocs, doc, deleteDoc } from "firebase/firestore";
 
 export default function Dashboard() {
   const [movies, setMovies] = useState([]);
@@ -10,11 +12,18 @@ export default function Dashboard() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingMovie, setEditingMovie] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const { user } = useAuth(); // Needed to query only user's movies
 
   const fetchMovies = async () => {
+    if (!user) return;
     try {
-      const { data } = await api.get("/movies/");
-      setMovies(data);
+      const q = query(collection(db, "movies"), where("userId", "==", user.id));
+      const querySnapshot = await getDocs(q);
+      const moviesData = [];
+      querySnapshot.forEach((doc) => {
+        moviesData.push({ id: doc.id, ...doc.data() });
+      });
+      setMovies(moviesData);
     } catch (err) {
       console.error("Failed to fetch movies", err);
     } finally {
@@ -24,13 +33,12 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchMovies();
-  }, []);
+  }, [user]);
 
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this movie?")) {
       try {
-        await api.delete(`/movies/${id}`);
-        // instantly update UI without fetching again
+        await deleteDoc(doc(db, "movies", id));
         setMovies(movies.filter(m => m.id !== id));
       } catch (err) {
         console.error("Failed to delete movie", err);

@@ -32,7 +32,7 @@ export default function Profile() {
                         <Calendar className="w-4 h-4" /> Account Created
                     </label>
                     <div className="mt-1 text-lg font-medium text-slate-300">
-                        {new Date(user.created_at).toLocaleDateString("en-US", {
+                        {new Date(user.createdAt).toLocaleDateString("en-US", {
                             year: 'numeric',
                             month: 'long',
                             day: 'numeric'

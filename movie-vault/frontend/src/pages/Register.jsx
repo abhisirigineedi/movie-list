@@ -23,7 +23,11 @@ export default function Register() {
       // Direct user to login after successful register
       navigate("/login");
     } catch (err) {
-      setError(err.message || err.response?.data?.detail || "Registration failed. Try again.");
+      let msg = err.message;
+      if (err.code === "auth/email-already-in-use") {
+          msg = "This username is already taken. Please choose another one.";
+      }
+      setError(msg || "Registration failed. Try again.");
     } finally {
       setLoading(false);
     }

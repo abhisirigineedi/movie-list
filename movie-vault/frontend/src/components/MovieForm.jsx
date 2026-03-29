@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
-import api from "../api/axios";
+import { db } from "../firebase";
+import { useAuth } from "../context/AuthContext";
+import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
 
 export default function MovieForm({ movie, onClose, onSaved }) {
+    const { user } = useAuth();
     const [formData, setFormData] = useState({
         name: "",
         genre: "",
@@ -29,13 +32,17 @@ export default function MovieForm({ movie, onClose, onSaved }) {
         setSubmitting(true);
         try {
             if (movie) {
-                await api.put(`/movies/${movie.id}`, formData);
+                await updateDoc(doc(db, "movies", movie.id), formData);
             } else {
-                await api.post("/movies/", formData);
+                await addDoc(collection(db, "movies"), {
+                    ...formData,
+                    userId: user.id
+                });
             }
             onSaved();
         } catch (err) {
-            setError(err.response?.data?.detail || "An error occurred");
+            console.error(err);
+            setError(err.message || "An error occurred connecting to Firebase");
         } finally {
             setSubmitting(false);
         }
@@ -110,7 +117,7 @@ export default function MovieForm({ movie, onClose, onSaved }) {
                                     type="range"
                                     min="0"
                                     max="5"
-                                    step="0.5"
+                                    step="0.1"
                                     value={formData.rating}
                                     onChange={e => setFormData({ ...formData, rating: parseFloat(e.target.value) })}
                                     className="flex-1 accent-indigo-500"

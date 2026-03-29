@@ -1,5 +1,11 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import api from "../api/axios";
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged 
+} from "firebase/auth";
+import { auth } from "../firebase";
 
 const AuthContext = createContext();
 
@@ -9,38 +15,37 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const checkUser = async () => {
-    try {
-      const { data } = await api.get("/auth/check");
-      if (data.authenticated) {
-        const profileRes = await api.get("/profile/");
-        setUser(profileRes.data);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      // We map currentUser to match our old structure if possible
+      if (currentUser) {
+        setUser({ 
+          id: currentUser.uid, 
+          username: currentUser.email.split('@')[0], 
+          email: currentUser.email,
+          createdAt: currentUser.metadata.creationTime
+        });
       } else {
         setUser(null);
       }
-    } catch {
-      setUser(null);
-    } finally {
       setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    checkUser();
+    });
+    return () => unsubscribe();
   }, []);
 
   const login = async (username, password) => {
-    await api.post("/auth/login", { username, password });
-    await checkUser();
+    // If username doesn't have an @ assuming it's dummy domain for matching our previous logic
+    const email = username.includes("@") ? username : `${username}@movievault.local`;
+    await signInWithEmailAndPassword(auth, email, password);
   };
 
   const register = async (username, password) => {
-    await api.post("/auth/register", { username, password });
+    const email = username.includes("@") ? username : `${username}@movievault.local`;
+    await createUserWithEmailAndPassword(auth, email, password);
   };
 
   const logout = async () => {
-    await api.post("/auth/logout");
-    setUser(null);
+    await signOut(auth);
   };
 
   if (loading) return null; // Or a nice spinner
